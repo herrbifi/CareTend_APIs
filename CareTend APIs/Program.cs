@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using RestSharp;
 
@@ -19,6 +20,7 @@ namespace CareTend_APIs
         {
             var token = GetToken();
             GetPatient(token);
+            PutPatientNote(token);
         }
 
         static string GetToken()
@@ -39,10 +41,33 @@ namespace CareTend_APIs
         static void GetPatient(string token)
         {
             var client = new RestClient(_restUrl);
-            var httpRequest = new RestRequest("api/v1/commands/patients?medicalRecordNumber=200220", Method.Get);
+            var httpRequest = new RestRequest("api/v1/commands/patients?medicalRecordNumber=MRN#", Method.Get);
             httpRequest.AddHeader("Authorization", "Bearer " + token);
 
             var patientResponse = client.Execute(httpRequest);
+        }
+
+        static void PutPatientNote(string token)
+        {
+            var requestBodyValue = new PutPatientNoteRequest()
+            {
+                MRN = "MRN#",
+                PatientNoteType = 1,
+                EnteredByEmployee = 1,
+                FollowUpEmployee = 1,
+                EnteredDate = DateTime.Now,
+                Subject = "Progress Notes Create Demo for MRN",
+                Body = "TEST body of the notes for MRN.",
+                IsFollowUpComplete = true
+            };
+
+            var client = new RestClient(_restUrl);
+
+            var request = new RestRequest("api/v1/commands/patientnote", Method.Post);
+            request.AddHeader("Authorization", "Bearer " + token);
+            request.AddJsonBody(JsonConvert.SerializeObject(requestBodyValue));
+
+            var patientResponse = client.Execute(request);
         }
     }
 }
@@ -58,4 +83,16 @@ public class Parameter
 {    
     public string name { get; set; }
     public string value { get; set; }
+}
+
+public class PutPatientNoteRequest
+{
+    public string MRN { get; set; }
+    public int PatientNoteType { get; set; }
+    public int EnteredByEmployee { get; set; }
+    public int FollowUpEmployee { get; set; }
+    public DateTime EnteredDate { get; set; }
+    public string Subject { get; set; }
+    public string Body { get; set; }
+    public bool IsFollowUpComplete { get; set; }
 }
